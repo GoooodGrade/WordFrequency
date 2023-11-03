@@ -18,56 +18,63 @@ namespace WordFrequency
             {
                 //split the input string with 1 to n pieces of spaces
                 string[] words = Regex.Split(inputStr, pattern);
-
-
                 var inputList = words.Select(w=>new WordCount(w,1)).ToList();
-
                 //get the map for the next step of sizing the same word
-                Dictionary<string, List<WordCount>> map = GetListMap(inputList);
-
-                List<WordCount> list = new List<WordCount>();
-                foreach (var entry in map)
-                {
-                    WordCount wordCount = new WordCount(entry.Key, entry.Value.Count);
-                    list.Add(wordCount);
-                }
-
-                inputList = list;
-
+                Dictionary<string, List<WordCount>> wordListMap = GetListMap(inputList);
+                inputList = TransMapToWordCounts(wordListMap);
                 inputList.Sort((w1, w2) => w2.Count - w1.Count);
-
-                List<string> strList = new List<string>();
-
-                //stringJoiner joiner = new stringJoiner("\n");
-                foreach (WordCount w in inputList)
-                {
-                    string s = w.Word + " " + w.Count;
-                    strList.Add(s);
-                }
-
-                return string.Join("\n", strList.ToArray());
+                var result = JoinListToString(inputList);
+                return result;
             }
         }
 
-        private Dictionary<string, List<WordCount>> GetListMap(List<WordCount> inputList)
+        private string JoinListToString(List<WordCount> inputList)
         {
-            Dictionary<string, List<WordCount>> map = new Dictionary<string, List<WordCount>>();
-            foreach (var input in inputList)
+            List<string> strList = new List<string>();
+
+            foreach (WordCount w in inputList)
             {
-                //       map.computeIfAbsent(input.getValue(), k -> new ArrayList<>()).add(input);
-                if (!map.ContainsKey(input.Word))
+                string s = w.Word + " " + w.Count;
+                strList.Add(s);
+            }
+
+            const string separator = "\n";
+            string result = string.Join(separator, strList.ToArray());
+            return result;
+        }
+
+        private List<WordCount> TransMapToWordCounts(Dictionary<string, List<WordCount>> wordListMap)
+        {
+            List<WordCount> list = new List<WordCount>();
+            foreach (var entry in wordListMap)
+            {
+                WordCount wordCount = new WordCount(entry.Key, entry.Value.Count);
+                list.Add(wordCount);
+            }
+
+            return list;
+        }
+
+        private Dictionary<string, List<WordCount>> GetListMap(List<WordCount> wordCounts)
+        {
+            Dictionary<string, List<WordCount>> wordListMap = new Dictionary<string, List<WordCount>>();
+            foreach (var wordCount in wordCounts)
+            {
+                if (!wordListMap.ContainsKey(wordCount.Word))
                 {
-                    List<WordCount> arr = new List<WordCount>();
-                    arr.Add(input);
-                    map.Add(input.Word, arr);
+                    List<WordCount> tmpWordCounts = new List<WordCount>
+                    {
+                        wordCount
+                    };
+                    wordListMap.Add(wordCount.Word, tmpWordCounts);
                 }
                 else
                 {
-                    map[input.Word].Add(input);
+                    wordListMap[wordCount.Word].Add(wordCount);
                 }
             }
 
-            return map;
+            return wordListMap;
         }
     }
 }
